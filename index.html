@@ -11,13 +11,6 @@
     --card:#ffffff;
     --text:#000;
 }
-
-.dark{
-    --bg:#121212;
-    --card:#1e1e1e;
-    --text:#fff;
-}
-
 body{
     font-family:-apple-system;
     background:var(--bg);
@@ -25,16 +18,12 @@ body{
     font-size:20px;
     color:var(--text);
 }
-
 .box{padding:15px;}
-
 .card{
     background:var(--card);
     padding:25px;
     border-radius:18px;
 }
-
-/* 🔥 INPUT TO + DỄ BẤM */
 input{
     width:48%;
     padding:20px;
@@ -44,13 +33,16 @@ input{
     font-size:22px;
     text-align:center;
 }
-
+label{
+    font-size:18px;
+    display:block;
+    margin-top:8px;
+}
 #question{
     font-size:22px;
     font-weight:bold;
     margin-bottom:18px;
 }
-
 .answer-btn{
     width:100%;
     padding:18px;
@@ -62,25 +54,16 @@ input{
     font-size:18px;
     color:white;
 }
-
 .selected{background:#1565c0;}
 .correct{background:#2e7d32;}
 .wrong{background:#c62828;}
-
 #explanation{
     margin-top:10px;
     padding:12px;
     border-radius:10px;
     background:#e3f2fd;
     display:none;
-    color:#000;
 }
-
-.dark #explanation{
-    background:#263238;
-    color:#fff;
-}
-
 .btn{
     width:100%;
     padding:18px;
@@ -88,12 +71,9 @@ input{
     border:none;
     border-radius:14px;
 }
-
 .confirm{background:#4CAF50;color:white;}
 .next{background:#2196F3;color:white;display:none;}
-.retry{background:#ff9800;color:white;display:none;}
-.darkBtn{background:#333;color:#fff;}
-
+.retry{background:#ff9800;color:white;}
 #score{margin-top:10px;font-weight:bold;}
 
 .list-item{
@@ -103,12 +83,23 @@ input{
     margin-top:10px;
     color:white;
 }
-
 .correct-answer{
     background:#4CAF50;
     padding:6px;
     border-radius:8px;
     margin-top:5px;
+}
+
+#homeBtn{
+    position:fixed;
+    top:20px;
+    right:20px;
+    background:#ff9800;
+    color:white;
+    border:none;
+    border-radius:12px;
+    padding:12px 14px;
+    z-index:9999;
 }
 </style>
 </head>
@@ -120,34 +111,35 @@ input{
 <div class="box">
 <div class="card">
 
-<button class="btn darkBtn" onclick="toggleDark()">🌙 Dark mode</button>
-
 <div id="totalQ"></div>
 
 <div id="startArea">
-    <input type="number" id="startQ" placeholder="Từ câu">
-    <input type="number" id="endQ" placeholder="Đến câu">
+<input type="number" id="startQ" placeholder="Từ câu">
+<input type="number" id="endQ" placeholder="Đến câu">
 
-    <div id="rangeCount"></div>
+<div id="rangeCount"></div>
 
-    <!-- 🔥 DISABLE BAN ĐẦU -->
-    <button class="btn confirm" id="startBtn" onclick="startQuiz()" disabled>Bắt đầu</button>
+<div style="margin-top:15px;">
+<label><input type="radio" name="mode" value="random" checked> 🔀 Đảo câu & đáp án</label>
+<label><input type="radio" name="mode" value="normal"> 📌 Giữ nguyên thứ tự</label>
+</div>
 
-    <button class="btn next" onclick="showList()" style="display:block;">📋 Danh sách câu</button>
+<button class="btn confirm" id="startBtn" onclick="startQuiz()" disabled>Bắt đầu</button>
+<button class="btn next" onclick="showList()" style="display:block;">📋 Danh sách câu</button>
 
-    <div id="listArea"></div>
+<div id="listArea"></div>
 </div>
 
 <div id="quizArea" style="display:none;">
+<button id="homeBtn" onclick="goHome()">🏠</button>
+
 <div id="question"></div>
 <div id="answers"></div>
-
 <div id="explanation"></div>
 
 <button class="btn confirm" id="confirmBtn" onclick="confirmAnswer()">Xác nhận</button>
 <button class="btn next" id="nextBtn" onclick="nextQuestion()">Câu tiếp</button>
-<button class="btn retry" id="retryBtn" onclick="retryWrong()">Làm lại câu sai</button>
-<button class="btn retry" id="homeBtn" onclick="goHome()">Trang chủ</button>
+<button class="btn retry" id="retryBtn" onclick="retryWrong()" style="display:none;">Làm lại câu sai</button>
 
 <div id="score"></div>
 </div>
@@ -160,30 +152,20 @@ let questions=[], wrongQuestions=[];
 let current=0, score=0, selected=null, answered=false;
 let currentOptions=[];
 
-// DARK
-function toggleDark(){
-    document.body.classList.toggle("dark");
-}
-
-// START
 function startQuiz(){
     let start=parseInt(startQ.value)||1;
     let end=parseInt(endQ.value)||allQuestions.length;
+    let mode=document.querySelector('input[name="mode"]:checked').value;
 
-    let filtered = allQuestions.filter(q=>q.id>=start && q.id<=end);
-    filtered.sort(()=>Math.random()-0.5);
+    let filtered=allQuestions.filter(q=>q.id>=start && q.id<=end);
 
-    questions = filtered;
+    if(mode==="random"){
+        filtered.sort(()=>Math.random()-0.5);
+    }
+
+    questions=filtered;
 
     current=0; score=0; wrongQuestions=[];
-
-    // RESET UI
-    retryBtn.style.display="none";
-    homeBtn.style.display="none";
-    nextBtn.style.display="none";
-    confirmBtn.style.display="block";
-    explanation.style.display="none";
-    score.innerText="";
 
     startArea.style.display="none";
     quizArea.style.display="block";
@@ -191,7 +173,6 @@ function startQuiz(){
     loadQuestion();
 }
 
-// LOAD
 function loadQuestion(){
     selected=null; answered=false;
 
@@ -200,28 +181,26 @@ function loadQuestion(){
     explanation.style.display="none";
 
     let q=questions[current];
-
     question.innerText=`Câu ${current+1}/${questions.length} (ID ${q.id}): ${q.question}`;
 
     answers.innerHTML="";
 
-    currentOptions = q.options.map(opt=>{
-        return {
-            text: opt.substring(opt.indexOf(".")+1).trim()
-        };
+    currentOptions=q.options.map(opt=>{
+        return {text:opt.substring(opt.indexOf(".")+1).trim()};
     });
 
-    currentOptions.sort(()=>Math.random()-0.5);
+    let mode=document.querySelector('input[name="mode"]:checked').value;
+
+    if(mode==="random"){
+        currentOptions.sort(()=>Math.random()-0.5);
+    }
 
     let letters=["A","B","C"];
 
     currentOptions.forEach((opt,i)=>{
-        opt.letter=letters[i];
-
         let btn=document.createElement("button");
         btn.className="answer-btn";
-
-        btn.innerHTML = `<b>${opt.letter}.</b> ${opt.text}`;
+        btn.innerHTML=`<b>${letters[i]}.</b> ${opt.text}`;
 
         btn.onclick=()=>{
             if(answered) return;
@@ -234,7 +213,6 @@ function loadQuestion(){
     });
 }
 
-// CONFIRM
 function confirmAnswer(){
     if(!selected||answered) return;
     answered=true;
@@ -243,24 +221,18 @@ function confirmAnswer(){
     let correctText=q.options.find(o=>o.startsWith(q.answer+"."));
     correctText=correctText.substring(correctText.indexOf(".")+1).trim();
 
-    let isCorrect = selected.text === correctText;
+    let isCorrect=selected.text===correctText;
 
     document.querySelectorAll(".answer-btn").forEach((b,i)=>{
         let opt=currentOptions[i];
-
-        if(opt.text === correctText){
-            b.classList.add("correct");
-        }
-
-        if(selected && opt.text === selected.text && !isCorrect){
-            b.classList.add("wrong");
-        }
+        if(opt.text===correctText) b.classList.add("correct");
+        if(opt.text===selected.text && !isCorrect) b.classList.add("wrong");
     });
 
     if(isCorrect) score++;
     else wrongQuestions.push(q);
 
-    explanation.innerText = q.explanation || ("Đáp án đúng: " + q.answer);
+    explanation.innerText=q.explanation || ("Đáp án đúng: "+q.answer);
     explanation.style.display="block";
 
     score.innerText=`Điểm: ${score}/${questions.length}`;
@@ -268,83 +240,48 @@ function confirmAnswer(){
     confirmBtn.style.display="none";
     nextBtn.style.display="block";
 
-    if(current===questions.length-1){
+    if(current===questions.length-1 && wrongQuestions.length>0){
         retryBtn.style.display="block";
-        homeBtn.style.display="block";
     }
 }
 
-// NEXT
 function nextQuestion(){
     current++;
     if(current>=questions.length) return;
     loadQuestion();
 }
 
-// RETRY
 function retryWrong(){
     questions=[...wrongQuestions];
     wrongQuestions=[];
     current=0; score=0;
 
     retryBtn.style.display="none";
-    homeBtn.style.display="none";
-    nextBtn.style.display="none";
-    confirmBtn.style.display="block";
-    explanation.style.display="none";
-    score.innerText="";
-
     loadQuestion();
 }
 
-// HOME
 function goHome(){
-    quizArea.style.display="none";
-    startArea.style.display="block";
-
-    retryBtn.style.display="none";
-    homeBtn.style.display="none";
-    nextBtn.style.display="none";
-    confirmBtn.style.display="block";
-    explanation.style.display="none";
-    score.innerText="";
+    if(confirm("Bạn có chắc muốn quay về trang chủ không?")){
+        quizArea.style.display="none";
+        startArea.style.display="block";
+    }
 }
 
-// 🔥 UPDATE RANGE + KHÓA NÚT
 function updateRange(){
     let s=parseInt(startQ.value);
     let e=parseInt(endQ.value);
 
-    if(!s || !e){
-        rangeCount.innerText="";
-        startBtn.disabled = true;
-        startBtn.style.opacity = 0.5;
+    if(!s||!e){
+        startBtn.disabled=true;
         return;
     }
 
-    if(e < s){
-        rangeCount.innerText="⚠️ Sai khoảng";
-        startBtn.disabled = true;
-        startBtn.style.opacity = 0.5;
-        return;
-    }
-
-    let count = allQuestions.filter(q=>q.id>=s && q.id<=e).length;
-
-    if(count === 0){
-        rangeCount.innerText="❌ Không có câu";
-        startBtn.disabled = true;
-        startBtn.style.opacity = 0.5;
-    }else{
-        rangeCount.innerText="📊 Số câu phải làm: "+count;
-        startBtn.disabled = false;
-        startBtn.style.opacity = 1;
-    }
+    let count=allQuestions.filter(q=>q.id>=s && q.id<=e).length;
+    startBtn.disabled = count===0;
 }
 
 startQ.oninput=endQ.oninput=updateRange;
 
-// LIST
 function showList(){
     listArea.innerHTML="";
 
@@ -352,19 +289,18 @@ function showList(){
         let div=document.createElement("div");
         div.className="list-item";
 
-        div.innerHTML = `
-            <b>Câu ${q.id}:</b> ${q.question}
-            ${q.options.map(opt=>{
-                let isCorrect = opt.startsWith(q.answer+".");
-                return `<div class="${isCorrect?'correct-answer':''}">${opt}</div>`;
-            }).join("")}
+        div.innerHTML=`
+        <b>Câu ${q.id}:</b> ${q.question}
+        ${q.options.map(opt=>{
+            let isCorrect=opt.startsWith(q.answer+".");
+            return `<div class="${isCorrect?'correct-answer':''}">${opt}</div>`;
+        }).join("")}
         `;
 
         listArea.appendChild(div);
     });
 }
 
-// LOAD
 window.onload=()=>{
     totalQ.innerText="Tổng số câu: "+allQuestions.length;
 }
